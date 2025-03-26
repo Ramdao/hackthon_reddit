@@ -4,52 +4,42 @@ Devvit.configure({
   redditAPI: true, // Enable Reddit API
 });
 
-// List of random questions with correct and wrong answers
+// List of image questions with correct and wrong answers
 const questions = [
   {
-    question: "What is the capital of France?",
-    correct: "Paris",
-    wrong: ["London", "Berlin", "Madrid"],
+    image: "https://i.redd.it/1b0t4xk5q5xb1.jpg", // Golden Gate Bridge
+    correct: "Golden Gate Bridge",
+    wrong: ["Brooklyn Bridge", "London Bridge", "Sydney Harbour Bridge"],
   },
   {
-    question: "Which planet is known as the Red Planet?",
-    correct: "Mars",
-    wrong: ["Venus", "Jupiter", "Saturn"],
+    image: "https://i.redd.it/1b0t4xk5q5xb1.jpg", // Eiffel Tower
+    correct: "Eiffel Tower",
+    wrong: ["Leaning Tower of Pisa", "Empire State Building", "Big Ben"],
   },
   {
-    question: "Who wrote 'To Kill a Mockingbird'?",
-    correct: "Harper Lee",
-    wrong: ["Mark Twain", "J.K. Rowling", "Ernest Hemingway"],
+    image: "https://i.redd.it/1b0t4xk5q5xb1.jpg", // Mona Lisa
+    correct: "Mona Lisa",
+    wrong: ["The Starry Night", "The Scream", "Girl with a Pearl Earring"],
   },
   {
-    question: "What is 5 + 3?",
-    correct: "8",
-    wrong: ["6", "9", "12"],
+    image: "https://i.redd.it/1b0t4xk5q5xb1.jpg", // Statue of Liberty
+    correct: "Statue of Liberty",
+    wrong: ["Christ the Redeemer", "The Thinker", "David"],
   },
 ];
 
 Devvit.addCustomPostType({
-  name: "Speed Quiz Game",
-  height: "regular",
-  render: (_context) => {
+  name: "Image Quiz Game",
+  height: "tall", // Using tall height to better accommodate images
+  render: (context) => {
     const [score, setScore] = useState(0);
     const [questionIndex, setQuestionIndex] = useState<number>(0);
     const [answers, setAnswers] = useState<string[]>([]);
     const [gameStarted, setGameStarted] = useState(false);
     const [gameEnded, setGameEnded] = useState(false);
 
-    const postId = _context?.postId;
-    const reddit = _context?.reddit;
-
-    console.log("Devvit Context:", _context); // Debugging line
-
-    if (!postId) {
-      console.error("Error: postId is undefined. Make sure this is running on a post.");
-    }
-
-    if (!reddit) {
-      console.error("Error: Reddit API is not available. Check Devvit configuration.");
-    }
+    const postId = context?.postId;
+    const reddit = context?.reddit;
 
     // Function to start the game
     const startGame = () => {
@@ -94,21 +84,16 @@ Devvit.addCustomPostType({
 
     // Post the score to the Reddit comments
     const postScoreToComments = async () => {
-      if (!postId) {
-        console.error("Error: postId is undefined.");
+      if (!postId || !reddit) {
+        console.error("Error: Missing postId or Reddit API");
         return;
       }
 
-      if (!reddit) {
-        console.error("Error: Reddit API is not available.");
-        return;
-      }
-
-      const commentText = `I finished the Speed Quiz Game with ${score} correct answers! 🎉`;
+      const commentText = `I finished the Image Quiz Game with ${score} correct answers out of ${questions.length}! 🎉`;
 
       try {
         await reddit.submitComment({
-          id: postId, // Correct property
+          id: postId,
           text: commentText,
         });
         console.log("Score posted successfully!");
@@ -120,30 +105,49 @@ Devvit.addCustomPostType({
     return (
       <vstack height="100%" width="100%" gap="medium" alignment="center middle">
         {!gameStarted ? (
-          <button appearance="primary" onPress={startGame}>
-            Start Game
-          </button>
+          <>
+            <text size="xxlarge" weight="bold">Image Quiz Game</text>
+            <text size="medium">Identify what's shown in each image</text>
+            <button appearance="primary" onPress={startGame}>
+              Start Game
+            </button>
+          </>
         ) : gameEnded ? (
           <>
-            <text size="large">Game Over! 🎉</text>
-            <text size="medium">Total Correct Answers: {score}</text>
-            <button appearance="primary" onPress={postScoreToComments}>
-              Post My Score
-            </button>
-            <button appearance="primary" onPress={startGame}>
-              Play Again
-            </button>
+            <text size="xxlarge" weight="bold">Game Over! 🎉</text>
+            <text size="xlarge">Your Score: {score}/{questions.length}</text>
+            <vstack gap="small">
+              <button appearance="primary" onPress={postScoreToComments}>
+                Post My Score
+              </button>
+              <button appearance="primary" onPress={startGame}>
+                Play Again
+              </button>
+            </vstack>
           </>
         ) : (
           <>
-            <text size="large">{questions[questionIndex].question}</text>
-            <hstack gap="small" alignment="center">
+            <image 
+              url={questions[questionIndex].image} 
+              imageWidth={300} 
+              imageHeight={300} 
+              resizeMode="cover" 
+              description="Quiz image"
+            />
+            <text size="medium">What is this?</text>
+            <vstack gap="small" width="100%" alignment="center middle">
               {answers.map((answer, index) => (
-                <button key={`${answer}-${index}`} appearance="primary" onPress={() => handleAnswerClick(answer)}>
+                <button 
+                  key={`${answer}-${index}`} 
+                  appearance="primary" 
+                  onPress={() => handleAnswerClick(answer)}
+                  size="large"
+                  width="80%"
+                >
                   {answer}
                 </button>
               ))}
-            </hstack>
+            </vstack>
           </>
         )}
       </vstack>
